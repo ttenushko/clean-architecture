@@ -1,0 +1,25 @@
+ext {
+    toolVersions = [
+            android: [
+                    buildTools: '28.0.2',
+                    compileSdk: 28,
+                    targetSdk : 28,
+                    minSdk    : 21
+            ]
+    ]
+
+    deps = [
+            support : [
+                    appCompat          : 'androidx.appcompat:appcompat:1.0.2',
+                    lifecycle          : 'androidx.lifecycle:lifecycle-viewmodel:2.0.0',
+                    lifecycleExtensions: 'android.arch.lifecycle:extensions:2.0.0',
+                    liveData           : 'androidx.lifecycle:lifecycle-livedata:2.0.0',
+                    viewModel          : 'android.arch.lifecycle:viewmodel: 2.0.0',
+                    navigationFragment : 'androidx.navigation:navigation-fragment-ktx:2.1.0',
+                    navigationUi       : 'androidx.navigation:navigation-ui-ktx:2.1.0',
+            ],
+            rxJava  : 'io.reactivex.rxjava2:rxjava:2.2.2',
+            coroutine: 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.1',
+            kassava : 'au.com.console:kassava:1.0.0',
+    ]
+}
