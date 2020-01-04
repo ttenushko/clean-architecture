@@ -24,4 +24,6 @@ ext {
             ],
             kassava: 'au.com.console:kassava:1.0.0',
     ]
+
+    VERSION_NAME = "0.5.0-SNAPSHOT"
 }
