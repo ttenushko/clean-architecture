@@ -2,26 +2,21 @@ package com.ttenushko.cleanarchitecture.domain.usecase
 
 import com.ttenushko.cleanarchitecture.domain.common.Cancellable
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.actor
-import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 
 @ExperimentalCoroutinesApi
 @ObsoleteCoroutinesApi
-abstract class CoroutineMultiResultUseCase<P : Any, R : Any>(
-    private val dispatcher: CoroutineDispatcher,
-    private val channelCapacity: Int = Channel.UNLIMITED
+abstract class FlowMultiResultUseCase<P : Any, R : Any>(
+    private val dispatcher: CoroutineDispatcher
 ) : MultiResultUseCase<P, R> {
 
     final override fun execute(param: P, callback: MultiResultUseCase.Callback<R>): Cancellable =
         CoroutineScope(dispatcher + Job()).let { coroutineScope ->
-            val actor = coroutineScope.actor<R>(capacity = channelCapacity) {
-                consumeEach { result -> callback.onResult(result) }
-            }
             coroutineScope.launch {
                 try {
-                    run(param, actor)
+                    createFlow(param)
+                        .collect { callback.onResult(it) }
                     callback.onComplete()
                 } catch (error: Throwable) {
                     callback.onError(error)
@@ -30,5 +25,5 @@ abstract class CoroutineMultiResultUseCase<P : Any, R : Any>(
             coroutineScope.asCancellable()
         }
 
-    protected abstract suspend fun run(param: P, channel: SendChannel<R>)
+    protected abstract fun createFlow(param: P): Flow<R>
 }

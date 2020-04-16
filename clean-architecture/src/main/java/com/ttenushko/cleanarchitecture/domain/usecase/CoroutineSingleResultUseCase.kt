@@ -1,16 +1,18 @@
 package com.ttenushko.cleanarchitecture.domain.usecase
 
 import com.ttenushko.cleanarchitecture.domain.common.Cancellable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 abstract class CoroutineSingleResultUseCase<P : Any, R : Any>(
-    private val dispatcher: CoroutineDispatcher = Dispatchers.Default
+    private val dispatcher: CoroutineDispatcher
 ) : SingleResultUseCase<P, R> {
 
-    @Suppress("DeferredResultUnused")
     final override fun execute(param: P, callback: SingleResultUseCase.Callback<R>): Cancellable =
-        CoroutineScope(dispatcher + SupervisorJob()).let { coroutineScope ->
-            coroutineScope.async {
+        CoroutineScope(dispatcher + Job()).let { coroutineScope ->
+            coroutineScope.launch {
                 try {
                     val result = run(param)
                     callback.onComplete(result)
@@ -18,14 +20,7 @@ abstract class CoroutineSingleResultUseCase<P : Any, R : Any>(
                     callback.onError(error)
                 }
             }
-            object : Cancellable {
-                override val isCancelled: Boolean
-                    get() = coroutineScope.coroutineContext[Job]?.isCancelled ?: false
-
-                override fun cancel() {
-                    coroutineScope.cancel()
-                }
-            }
+            coroutineScope.asCancellable()
         }
 
     protected abstract suspend fun run(param: P): R
