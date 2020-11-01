@@ -5,10 +5,10 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.ttenushko.cleanarchitecture.domain.usecase.*
-import com.ttenushko.cleanarchitecture.utils.usecase.UseCaseExecutorFactory
-import com.ttenushko.cleanarchitecture.utils.usecase.createExecutor
-import com.ttenushko.cleanarchitecture.utils.usecase.multiResultUseCaseProvider
-import com.ttenushko.cleanarchitecture.utils.usecase.singleResultUseCaseProvider
+import com.ttenushko.cleanarchitecture.utils.task.TaskExecutorFactory
+import com.ttenushko.cleanarchitecture.utils.task.createExecutor
+import com.ttenushko.cleanarchitecture.utils.task.multiResultUseCaseTaskProvider
+import com.ttenushko.cleanarchitecture.utils.task.singleResultUseCaseTaskProvider
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
@@ -23,11 +23,11 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "test"
     }
 
-    private val useCaseExecutorFactory = UseCaseExecutorFactory.create(lifecycleScope)
+    private val useCaseExecutorFactory = TaskExecutorFactory.create(lifecycleScope)
     private val customDispatcher = newSingleThreadContext("MyOwnThread")
     private val taskSingle =
         useCaseExecutorFactory.createExecutor<MySingleResultUseCase.Param, MySingleResultUseCase.Result, Unit>(
-            singleResultUseCaseProvider { _, _ ->
+            singleResultUseCaseTaskProvider { _, _ ->
                 MySingleResultUseCaseImpl(customDispatcher)
             },
             { result, _ -> Log.d(TAG, "Result=$result, thread=${Thread.currentThread()}") },
@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
 
     private val taskMulti =
         useCaseExecutorFactory.createExecutor<MyMultiResultUseCase.Param, MyMultiResultUseCase.Result, Unit>(
-            multiResultUseCaseProvider { _, _ ->
+            multiResultUseCaseTaskProvider { _, _ ->
                 MyMultiResultUseCaseImpl2(customDispatcher)
             },
             { result, _ -> Log.d(TAG, "Result=$result, thread=${Thread.currentThread()}") },
