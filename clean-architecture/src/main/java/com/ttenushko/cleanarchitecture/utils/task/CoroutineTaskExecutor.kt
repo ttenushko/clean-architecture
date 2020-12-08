@@ -1,15 +1,16 @@
 package com.ttenushko.cleanarchitecture.utils.task
 
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.sendBlocking
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-internal class CoroutineMultiResultTaskExecutor<P : Any, R : Any, T>(
+internal class CoroutineTaskExecutor<P : Any, R : Any, T>(
     private val coroutineScope: CoroutineScope,
-    private val taskProvider: (P, T) -> MultiResultTask<R>
+    private val taskProvider: (P, T) -> Task<P, R>
 ) : TaskExecutor<P, R, T> {
 
     @Volatile
@@ -33,10 +34,9 @@ internal class CoroutineMultiResultTaskExecutor<P : Any, R : Any, T>(
                 val context = TaskContext(null).also { taskContext = it }
                 context.job = coroutineScope.launch {
                     try {
-                        taskProvider(param, tag).execute()
-                            .collect { result ->
-                                onTaskResult(context, result, tag)
-                            }
+                        taskProvider(param, tag)
+                            .execute(param)
+                            .collect { onTaskResult(context, it, tag) }
                         onTaskComplete(context, tag)
                     } catch (error: Throwable) {
                         if (error !is CancellationException) {
@@ -73,7 +73,6 @@ internal class CoroutineMultiResultTaskExecutor<P : Any, R : Any, T>(
         synchronized(lock) {
             if (ctx === taskContext) {
                 taskContext = null
-                Unit
             } else null
         }?.also {
             completeHandler?.invoke(tag)
@@ -84,7 +83,6 @@ internal class CoroutineMultiResultTaskExecutor<P : Any, R : Any, T>(
         synchronized(lock) {
             if (ctx === taskContext) {
                 taskContext = null
-                Unit
             } else null
         }?.also {
             errorHandler?.invoke(error, tag)
@@ -95,10 +93,31 @@ internal class CoroutineMultiResultTaskExecutor<P : Any, R : Any, T>(
         synchronized(lock) {
             if (ctx === taskContext) {
                 taskContext = null
-                Unit
             } else null
         }
     }
+
+    private fun <P : Any, R : Any> Task<P, R>.execute(param: P): Flow<R> =
+        callbackFlow {
+            val cancellable = this@execute.execute(param, object : Task.Callback<R> {
+                override fun onResult(result: R) {
+                    try {
+                        sendBlocking(result)
+                    } catch (error: Exception) {
+                        // ignore
+                    }
+                }
+
+                override fun onComplete() {
+                    channel.close()
+                }
+
+                override fun onError(error: Throwable) {
+                    cancel("Error occurred.", error)
+                }
+            })
+            awaitClose { cancellable.cancel() }
+        }
 
     private class TaskContext(
         @Volatile
