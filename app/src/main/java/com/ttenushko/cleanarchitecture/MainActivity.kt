@@ -5,10 +5,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.ttenushko.cleanarchitecture.domain.usecase.*
-import com.ttenushko.cleanarchitecture.utils.task.TaskExecutorFactory
-import com.ttenushko.cleanarchitecture.utils.task.createExecutor
-import com.ttenushko.cleanarchitecture.utils.task.multiResultUseCaseTaskProvider
-import com.ttenushko.cleanarchitecture.utils.task.singleResultUseCaseTaskProvider
+import com.ttenushko.cleanarchitecture.utils.task.*
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
@@ -23,11 +20,11 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "test"
     }
 
-    private val useCaseExecutorFactory = TaskExecutorFactory.create(lifecycleScope)
+    private val taskExecutorFactory = TaskExecutorFactory.create(lifecycleScope)
     private val customDispatcher = newSingleThreadContext("MyOwnThread")
     private val taskSingle =
-        useCaseExecutorFactory.createExecutor<MySingleResultUseCase.Param, MySingleResultUseCase.Result, Unit>(
-            singleResultUseCaseTaskProvider { _, _ ->
+        taskExecutorFactory.createTaskExecutor<MySingleResultUseCase.Param, MySingleResultUseCase.Result, Unit>(
+            singleResultUseCaseTaskProvider() { _, _ ->
                 MySingleResultUseCaseImpl(customDispatcher)
             },
             { result, _ -> Log.d(TAG, "Result=$result, thread=${Thread.currentThread()}") },
@@ -35,8 +32,8 @@ class MainActivity : AppCompatActivity() {
         )
 
     private val taskMulti =
-        useCaseExecutorFactory.createExecutor<MyMultiResultUseCase.Param, MyMultiResultUseCase.Result, Unit>(
-            multiResultUseCaseTaskProvider { _, _ ->
+        taskExecutorFactory.createTaskExecutor<MyMultiResultUseCase.Param, MyMultiResultUseCase.Result, Unit>(
+            multiResultUseCaseTaskProvider() { _, _ ->
                 MyMultiResultUseCaseImpl2(customDispatcher)
             },
             { result, _ -> Log.d(TAG, "Result=$result, thread=${Thread.currentThread()}") },
