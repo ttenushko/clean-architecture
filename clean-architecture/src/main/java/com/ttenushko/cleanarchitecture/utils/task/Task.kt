@@ -1,13 +1,13 @@
 package com.ttenushko.cleanarchitecture.utils.task
 
-import com.ttenushko.cleanarchitecture.domain.common.Cancellable
+import com.ttenushko.cleanarchitecture.utils.Cancellable
 
-interface Task<P : Any, R : Any> {
-    fun execute(param: P, callback: Callback<R>): Cancellable
+public interface Task<P : Any, R : Any> {
+    public fun execute(param: P, callback: Callback<R>): Cancellable
 
-    interface Callback<R : Any> {
-        fun onResult(result: R)
-        fun onComplete()
-        fun onError(error: Throwable)
+    public interface Callback<R : Any> {
+        public fun onResult(result: R)
+        public fun onComplete()
+        public fun onError(error: Throwable)
     }
 }

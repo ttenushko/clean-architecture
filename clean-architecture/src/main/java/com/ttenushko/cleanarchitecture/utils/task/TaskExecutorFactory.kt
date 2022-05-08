@@ -1,31 +1,29 @@
 package com.ttenushko.cleanarchitecture.utils.task
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 
-interface TaskExecutorFactory {
-    fun <P : Any, R : Any, T> createTaskExecutor(taskProvider: TaskProvider<P, R, T>): TaskExecutor<P, R, T>
+public interface TaskExecutorFactory {
+    public fun <P : Any, R : Any, T> createTaskExecutor(task: Task<P, R>): TaskExecutor<P, R, T>
 
-    companion object {
-        fun create(coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)): TaskExecutorFactory =
+    public companion object {
+        public fun create(coroutineScope: CoroutineScope): TaskExecutorFactory =
             object : TaskExecutorFactory {
-                override fun <P : Any, R : Any, T> createTaskExecutor(taskProvider: TaskProvider<P, R, T>): TaskExecutor<P, R, T> =
-                    CoroutineTaskExecutor(coroutineScope) { param, tag ->
-                        taskProvider.provide(param, tag)
-                    }
+                override fun <P : Any, R : Any, T> createTaskExecutor(task: Task<P, R>): TaskExecutor<P, R, T> =
+                    CoroutineTaskExecutor(coroutineScope, task)
             }
     }
 }
 
-fun <P : Any, R : Any, T> TaskExecutorFactory.createTaskExecutor(
-    taskProvider: TaskProvider<P, R, T>,
+public fun <P : Any, R : Any, T> TaskExecutorFactory.createTaskExecutor(
+    task: Task<P, R>,
+    startHandler: ((T) -> Unit)? = null,
     resultHandler: ((R, T) -> Unit)? = null,
-    errorHandler: ((error: Throwable, T) -> Unit)? = null,
-    completeHandler: ((T) -> Unit)? = null
+    completeHandler: ((T) -> Unit)? = null,
+    errorHandler: ((error: Throwable, T) -> Unit)? = null
 ): TaskExecutor<P, R, T> =
-    this@createTaskExecutor.createTaskExecutor(taskProvider).apply {
+    this@createTaskExecutor.createTaskExecutor<P, R, T>(task).apply {
+        this.startHandler = startHandler
         this.resultHandler = resultHandler
-        this.errorHandler = errorHandler
         this.completeHandler = completeHandler
+        this.errorHandler = errorHandler
     }

@@ -1,13 +1,11 @@
 package com.ttenushko.cleanarchitecture.domain.usecase
 
-import com.ttenushko.cleanarchitecture.domain.common.Cancellable
+import com.ttenushko.cleanarchitecture.utils.Cancellable
+import com.ttenushko.cleanarchitecture.utils.asCancellable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 
-@ExperimentalCoroutinesApi
-@ObsoleteCoroutinesApi
-abstract class FlowMultiResultUseCase<P : Any, R : Any>(
+public abstract class FlowMultiResultUseCase<P : Any, R : Any>(
     private val dispatcher: CoroutineDispatcher
 ) : MultiResultUseCase<P, R> {
 
@@ -21,6 +19,8 @@ abstract class FlowMultiResultUseCase<P : Any, R : Any>(
                 } catch (error: Throwable) {
                     callback.onError(error)
                 }
+            }.also { job ->
+                job.invokeOnCompletion { coroutineScope.cancel() }
             }
             coroutineScope.asCancellable()
         }

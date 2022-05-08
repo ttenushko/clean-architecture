@@ -1,9 +1,13 @@
-package com.ttenushko.cleanarchitecture.domain.usecase
+package com.ttenushko.cleanarchitecture.utils
 
-import com.ttenushko.cleanarchitecture.domain.common.Cancellable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+
+public interface Cancellable {
+    public val isCancelled: Boolean
+    public fun cancel()
+}
 
 internal fun CoroutineScope.asCancellable(): Cancellable =
     object : Cancellable {

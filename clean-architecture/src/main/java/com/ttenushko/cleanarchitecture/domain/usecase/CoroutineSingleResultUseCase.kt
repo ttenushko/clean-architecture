@@ -1,12 +1,10 @@
 package com.ttenushko.cleanarchitecture.domain.usecase
 
-import com.ttenushko.cleanarchitecture.domain.common.Cancellable
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import com.ttenushko.cleanarchitecture.utils.Cancellable
+import com.ttenushko.cleanarchitecture.utils.asCancellable
+import kotlinx.coroutines.*
 
-abstract class CoroutineSingleResultUseCase<P : Any, R : Any>(
+public abstract class CoroutineSingleResultUseCase<P : Any, R : Any>(
     private val dispatcher: CoroutineDispatcher
 ) : SingleResultUseCase<P, R> {
 
@@ -19,6 +17,8 @@ abstract class CoroutineSingleResultUseCase<P : Any, R : Any>(
                 } catch (error: Throwable) {
                     callback.onError(error)
                 }
+            }.also { job ->
+                job.invokeOnCompletion { coroutineScope.cancel() }
             }
             coroutineScope.asCancellable()
         }

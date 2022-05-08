@@ -2,12 +2,11 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion "29.0.2"
+    compileSdkVersion rootProject.ext.tools.android.compileSdk
     defaultConfig {
         applicationId "com.ttenushko.cleanarchitecture"
-        minSdkVersion 21
-        targetSdkVersion 28
+        minSdkVersion rootProject.ext.tools.android.minSdk
+        targetSdkVersion rootProject.ext.tools.android.targetSdk
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -23,14 +22,12 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation project(':clean-architecture')
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.core:core-ktx:1.1.0'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation deps.androidx.appCompat
+    implementation deps.androidx.core
+    implementation deps.androidx.lifecycle
+    implementation deps.androidx.constraintLayout
     implementation deps.kotlinx.coroutines
     implementation deps.kotlinx.coroutinesAndroid
-    implementation deps.support.lifecycle
-    implementation deps.support.lifecycleKtx
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'

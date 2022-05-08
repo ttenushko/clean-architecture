@@ -2,37 +2,38 @@ package com.ttenushko.cleanarchitecture.utils.task
 
 import kotlinx.coroutines.CoroutineScope
 
-interface TaskExecutor<P : Any, R : Any, T> {
-    var resultHandler: ((R, T) -> Unit)?
-    var completeHandler: ((T) -> Unit)?
-    var errorHandler: ((Throwable, T) -> Unit)?
-    val isRunning: Boolean
 
-    fun start(param: P, tag: T): Boolean
-    fun stop(): Boolean
+public interface TaskExecutor<P : Any, R : Any, T> {
+    public var startHandler: ((T) -> Unit)?
+    public var resultHandler: ((R, T) -> Unit)?
+    public var completeHandler: ((T) -> Unit)?
+    public var errorHandler: ((Throwable, T) -> Unit)?
+    public val isRunning: Boolean
 
-    companion object {
-        fun <P : Any, R : Any, T> create(
+    public fun start(param: P, tag: T): Boolean
+    public fun stop(): Boolean
+
+    public companion object {
+        public fun <P : Any, R : Any, T> create(
             coroutineScope: CoroutineScope,
-            taskProvider: TaskProvider<P, R, T>
+            task: Task<P, R>
         ): TaskExecutor<P, R, T> =
-            CoroutineTaskExecutor(coroutineScope) { param, tag ->
-                taskProvider.provide(param, tag)
-            }
+            CoroutineTaskExecutor(coroutineScope, task)
     }
 }
 
-fun <P : Any, R : Any, T> createTaskExecutor(
+public fun <P : Any, R : Any, T> createTaskExecutor(
     coroutineScope: CoroutineScope,
-    taskProvider: TaskProvider<P, R, T>,
+    task: Task<P, R>,
+    startHandler: ((T) -> Unit)? = null,
     resultHandler: ((R, T) -> Unit)? = null,
-    errorHandler: ((error: Throwable, T) -> Unit)? = null,
-    completeHandler: ((T) -> Unit)? = null
+    completeHandler: ((T) -> Unit)? = null,
+    errorHandler: ((error: Throwable, T) -> Unit)? = null
 ): TaskExecutor<P, R, T> =
-    (CoroutineTaskExecutor<P, R, T>(coroutineScope) { param, tag ->
-        taskProvider.provide(param, tag)
-    }).apply {
-        this.resultHandler = resultHandler
-        this.errorHandler = errorHandler
-        this.completeHandler = completeHandler
-    }
+    CoroutineTaskExecutor<P, R, T>(coroutineScope, task)
+        .apply {
+            this.startHandler = startHandler
+            this.resultHandler = resultHandler
+            this.completeHandler = completeHandler
+            this.errorHandler = errorHandler
+        }
